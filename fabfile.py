@@ -40,7 +40,7 @@ def update(**kwargs):
     global fabfile_dir
     global project_dir
     global project_name
-    root_dir = kwargs.get('root_dir', '/var/www/')  # defaults to /var/www/
+    root_dir = kwargs.get('root_dir', '/var/www')  # defaults to /var/www/
     project_name = kwargs.get('project_name')
     # if no parameter supplied
     if project_name is None:
@@ -62,12 +62,12 @@ def initialize():
 def initialize_dirs():
     global root_dir
     global project_name
-    global project_dir
+    global nodeshot_dir
     global fabfile_dir
     global tmp_dir
-    root_dir = prompt('Set install directory (including trailing slash): ', default='/var/www/')
+    root_dir = prompt('Set install directory (including trailing slash): ', default='/var/www')
     project_name = prompt('Set project name: ', default='myproject')
-    project_dir = '%s%s' % (root_dir, project_name)
+    nodeshot_dir = '%s/nodeshot' % root_dir
     fabfile_dir = os.path.dirname(__file__)
     tmp_dir = '~/nodeshot_install'
 
@@ -169,10 +169,10 @@ def create_project():
     initialize()
     print(green("Creating project..."))
     
-    cmd('mkdir -p /var/www/')
-    with cd('/var/www/'):
-        cmd('workon nodeshot && nodeshot startproject %s' % project_name)
-    with cd('/var/www/%s' % project_name):
+    cmd('mkdir -p %s' % nodeshot_dir)
+    with cd(root_dir):
+        cmd('workon nodeshot && nodeshot startproject %s nodeshot' % project_name)
+    with cd(nodeshot_dir):
         cmd('chown -R %s:www-data .' % env['user'])
         cmd('adduser www-data %s' % env['user'])
         cmd('chmod 775 . log %s' % project_name)
@@ -185,7 +185,7 @@ def edit_settings():
     initialize_server()
     print(green("Creating Nodeshot config..."))
 
-    with cd ('%s/%s' % (project_dir, project_name)):
+    with cd('%s/%s' % (nodeshot_dir, project_name)):
         cmd('sed -i \'s#<user>#%s#g\' settings.py' % db_user)
         cmd('sed -i \'s#<password>#%s#g\' settings.py' % db_pass)
         cmd('sed -i \'s#<domain>#%s#g\' settings.py' % server_name)
@@ -210,7 +210,7 @@ def sync_data(update=None):
     sync_command = './manage.py syncdb --noinput && ./manage.py migrate && ./manage.py collectstatic --noinput'
     if update is not None:
         sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
-    with cd (project_dir):
+    with cd(nodeshot_dir):
         run('workon nodeshot && %s' % sync_command)
 
 
@@ -219,7 +219,7 @@ def create_admin():
     print(green("Creating Nodeshot admin account..."))
     create_admin_oneliner = """echo "from nodeshot.community.profiles.models import Profile;\
                             Profile.objects.create_superuser('admin', '', 'admin')" | ./manage.py shell"""
-    with cd(project_dir):
+    with cd(nodeshot_dir):
         cmd('workon nodeshot && %s' % create_admin_oneliner)
 
 
@@ -229,7 +229,7 @@ def configure_nginx():
     print(green("Configuring Nginx..."))
     nginx_dir = '/etc/nginx/ssl'
     cmd('mkdir -p %s' % nginx_dir)
-    with cd (nginx_dir):
+    with cd(nginx_dir):
         print(green("Insert Certificate details..."))
         cmd('cp ~/nodeshot_install/server.crt .')
         cmd('cp ~/nodeshot_install/server.key .')
@@ -243,7 +243,7 @@ def configure_nginx():
 
     with cd('/etc/nginx/sites-available'):
         cmd('sed -i \'s#nodeshot.yourdomain.com#%s#g\' %s' % (server_name, server_name))
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' %s' % (project_dir, server_name))
+        cmd('sed -i \'s#PROJECT_PATH#%s#g\' %s' % (nodeshot_dir, server_name))
         cmd('sed -i \'s#PROJECT_NAME#%s#g\' %s' % (project_name, server_name))
         cmd('ln -s /etc/nginx/sites-available/%s /etc/nginx/sites-enabled/%s' % (server_name, server_name))
     
@@ -256,13 +256,13 @@ def install_uwsgi():
         cmd('pip install uwsgi')
     
     uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
-    append(filename='%s/uwsgi.ini' % project_dir,
+    append(filename='%s/uwsgi.ini' % nodeshot_dir,
            text=uwsgi_ini,
            use_sudo=True)
     
-    with cd (project_dir):
+    with cd(nodeshot_dir):
         python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.ini' % project_dir)
+        cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.ini' % nodeshot_dir)
         cmd('sed -i \'s#PROJECT_NAME#%s#g\' uwsgi.ini' % project_name)
         cmd('sed -i \'s#PYTHON_HOME#%s#g\' uwsgi.ini' % python_home)
 
@@ -280,13 +280,13 @@ def configure_supervisor():
         celerybeat_conf = open('%s/celery-beat.conf' % fabfile_dir).read()
         append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=True)
         
-        with cd ('/etc/supervisor/conf.d/'):
+        with cd('/etc/supervisor/conf.d/'):
             python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
-            cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.conf' % project_dir)
-            cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery.conf' % project_dir)
+            cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.conf' % nodeshot_dir)
+            cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery.conf' % nodeshot_dir)
             cmd('sed -i \'s#PROJECT_NAME#%s#g\' celery.conf' % project_name)
             cmd('sed -i \'s#PYTHON_HOME#%s#g\' celery.conf' % python_home)
-            cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery-beat.conf' % project_dir)
+            cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery-beat.conf' % nodeshot_dir)
             cmd('sed -i \'s#PROJECT_NAME#%s#g\' celery-beat.conf' % project_name)
             cmd('sed -i \'s#PYTHON_HOME#%s#g\' celery-beat.conf' % python_home)
         
@@ -306,7 +306,7 @@ def install_postfix():
 def restart_services():
     initialize()
     print(green("Starting Nodeshot server..."))
-    with cd (project_dir):
+    with cd(nodeshot_dir):
         cmd('service nginx restart && supervisorctl restart all')
     print(green("Nodeshot server started"))
     print(green("Cleaning installation directory..."))
