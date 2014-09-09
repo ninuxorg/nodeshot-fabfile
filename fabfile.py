@@ -1,8 +1,15 @@
 import os
+import string
+import random
 
 from fabric.api import *
 from fabric.contrib.files import append
 from fabric.colors import green
+
+
+def generate_random_password():
+    """ generates random password """
+    return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(12))
 
 
 def cmd(*args, **kwargs):
@@ -85,7 +92,7 @@ def initialize_db():
             global db_user
             global db_pass
             db_user = prompt('Set database user: ', default='nodeshot')
-            db_pass = prompt('Set database user password: ')
+            db_pass = prompt('Set database user password: ', default=generate_random_password())
 
 
 def initialize_ssl():
