@@ -130,17 +130,6 @@ def install_dependencies():
         dependencies = ' '.join([line.replace('\n', '') for line in open(path).readlines()])
         # install
         cmd('apt-get install -y %s' % dependencies)
-        # install GEOS
-        with settings(warn_only=True):
-            geos_installed = bool(run('dpkg --get-selections | grep "geos\s"'))
-        if not geos_installed:
-            with cd(tmp_dir):
-                cmd('wget http://download.osgeo.org/geos/geos-3.3.8.tar.bz2')
-                cmd('tar xvfj geos-3.3.8.tar.bz2')
-            with cd('%s/geos-3.3.8' % tmp_dir):
-                cmd('./configure')
-                cmd('make')
-                cmd('checkinstall -y')
         # install Postgis 2
         with settings(warn_only=True):
             postgis_installed = bool(run('dpkg --get-selections | grep "postgis\s"'))
