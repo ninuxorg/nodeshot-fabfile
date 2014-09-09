@@ -63,6 +63,7 @@ def update(**kwargs):
     install_python_requirements()
     sync_data(update=True)
     restart_services()
+    print(green("UPDATE COMPLETED !"))
 
 
 # ------ internal functions ------ #
@@ -112,7 +113,7 @@ def initialize_ssl():
 
     if not openssl_installed:
         print(green("openssl command not found, installing it..."))
-        with hide('stdout', 'stderr'):
+        with hide('everything'):
             cmd('apt-get install -y openssl')
 
     print(green("****************************************"))
@@ -125,7 +126,7 @@ def initialize_ssl():
 
 def install_dependencies():
     initialize()
-    print(green("Installing required packages. This may take a while..."))
+    print(green("Installing required packages. This will take a bit of time to download..."))
     with hide('stdout', 'stderr'):
         cmd('apt-get update -y')
         path = '{path}/dependencies.txt'.format(path=fabfile_dir)
@@ -166,7 +167,7 @@ def create_db():
 def create_python_virtualenv():
     initialize()
     print(green("Creating virtual env..."))
-    with hide('stdout', 'stderr'):
+    with hide('everything'):
         cmd('pip install virtualenvwrapper')
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> ~/.bash_profile")
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> /root/.bashrc")
@@ -176,7 +177,7 @@ def create_python_virtualenv():
 
 def install_python_requirements():
     initialize()
-    print(green("Installing requirements. This may take a while..."))
+    print(green("Installing requirements. This will take a while, sit back and relax..."))
     with hide('stdout', 'stderr'):
         run('workon nodeshot && pip install -U distribute')
         run('workon nodeshot && pip install -U https://github.com/ninuxorg/nodeshot/tarball/master')
@@ -185,11 +186,11 @@ def install_python_requirements():
 def create_project():
     initialize()
     print(green("Creating project..."))
-
-    cmd('mkdir -p %s' % nodeshot_dir)
-    with cd(root_dir):
+    with cd(root_dir), hide('everything'):
+        cmd('mkdir -p %s' % nodeshot_dir)
         cmd('workon nodeshot && nodeshot startproject %s nodeshot' % project_name)
-    with cd(nodeshot_dir):
+    print(green("Setting permissions..."))
+    with cd(nodeshot_dir), hide('everything'):
         cmd('chown -R %s:www-data .' % env['user'])
         cmd('adduser www-data %s' % env['user'])
         cmd('chmod 775 . log %s' % project_name)
@@ -200,9 +201,8 @@ def edit_settings():
     initialize()
     initialize_db()
     initialize_server()
-    print(green("Creating Nodeshot config..."))
-
-    with cd('%s/%s' % (nodeshot_dir, project_name)), hide('stdout', 'stderr'):
+    print(green("Configuring nodeshot..."))
+    with cd('%s/%s' % (nodeshot_dir, project_name)), hide('everything'):
         cmd('sed -i \'s#<user>#%s#g\' settings.py' % db_user)
         cmd('sed -i \'s#<password>#%s#g\' settings.py' % db_pass)
         cmd('sed -i \'s#<domain>#%s#g\' settings.py' % server_name)
@@ -212,7 +212,7 @@ def edit_settings():
 def install_redis():
     initialize()
     print(green("Installing redis..."))
-    with hide('stdout', 'stderr'):
+    with hide('everything'):
         cmd('apt-get -y --force-yes install redis-server')
         run('workon nodeshot && pip install -U celery[redis]')
         cmd('echo 1 > /proc/sys/vm/overcommit_memory')
@@ -221,41 +221,42 @@ def install_redis():
 
 def sync_data(update=None):
     initialize()
-    print(green("Initializing Nodeshot..."))
+    print(green("Initializing nodeshot..."))
     sync_command = './manage.py syncdb --noinput && ./manage.py migrate && ./manage.py collectstatic --noinput'
     if update is not None:
         sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
-    with cd(nodeshot_dir), hide('stdout', 'stderr'):
+    with cd(nodeshot_dir), hide('everything'):
         run('workon nodeshot && %s' % sync_command)
 
 
 def create_admin():
     initialize()
-    print(green("Creating Nodeshot admin account..."))
+    print(green("Creating nodeshot admin account..."))
     create_admin_oneliner = """echo "from nodeshot.community.profiles.models import Profile;\
                             Profile.objects.create_superuser('admin', '', 'admin')" | ./manage.py shell"""
-    with cd(nodeshot_dir), hide('stdout', 'stderr'):
+    with cd(nodeshot_dir), hide('everything'):
         cmd('workon nodeshot && %s' % create_admin_oneliner)
 
 
 def configure_nginx():
     initialize()
     initialize_server()
-    print(green("Configuring Nginx..."))
+    print(green("Configuring nginx..."))
     nginx_ssl_dir = '/etc/nginx/ssl'
-    cmd('mkdir -p %s' % nginx_ssl_dir)
-    with cd(nginx_ssl_dir), hide('stdout', 'stderr'):
+    with hide('everything'):
+        cmd('mkdir -p %s' % nginx_ssl_dir)
+    with cd(nginx_ssl_dir), hide('everything'):
         cmd('cp ~/nodeshot_install/server.crt .')
         cmd('cp ~/nodeshot_install/server.key .')
         cmd('cp /etc/nginx/uwsgi_params /etc/nginx/sites-available/')
 
-    with hide('stdout', 'stderr'):
+    with hide('everything'):
         nginx_conf = open('%s/nginx.conf' % fabfile_dir).read()
         append(filename='/etc/nginx/sites-available/%s' % server_name,
                text=nginx_conf,
                use_sudo=True)
 
-    with cd('/etc/nginx/sites-available'), hide('stdout', 'stderr'):
+    with cd('/etc/nginx/sites-available'), hide('everything'):
         cmd('sed -i \'s#nodeshot.yourdomain.com#%s#g\' %s' % (server_name, server_name))
         cmd('sed -i \'s#PROJECT_PATH#%s#g\' %s' % (nodeshot_dir, server_name))
         cmd('sed -i \'s#PROJECT_NAME#%s#g\' %s' % (project_name, server_name))
@@ -265,14 +266,15 @@ def configure_nginx():
 
 def install_uwsgi():
     initialize()
-    with hide('stdout', 'stderr'):
+    print(green("Installing uwsgi..."))
+    with hide('everything'):
         cmd('pip install uwsgi')
         uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
         append(filename='%s/uwsgi.ini' % nodeshot_dir,
                text=uwsgi_ini,
                use_sudo=True)
 
-    with cd(nodeshot_dir), hide('stdout', 'stderr'):
+    with cd(nodeshot_dir), hide('everything'):
         python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
         cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.ini' % nodeshot_dir)
         cmd('sed -i \'s#PROJECT_NAME#%s#g\' uwsgi.ini' % project_name)
@@ -281,8 +283,8 @@ def install_uwsgi():
 
 def configure_supervisor():
     initialize()
-    print(green("Installing & configuring Supervisor..."))
-    with hide('stdout', 'stderr'):
+    print(green("Installing & configuring supervisor..."))
+    with hide('everything'):
         uwsgi_conf = open('%s/uwsgi.conf' % fabfile_dir).read()
         append(filename='/etc/supervisor/conf.d/uwsgi.conf', text=uwsgi_conf, use_sudo=True)
 
@@ -292,7 +294,7 @@ def configure_supervisor():
         celerybeat_conf = open('%s/celery-beat.conf' % fabfile_dir).read()
         append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=True)
 
-    with cd('/etc/supervisor/conf.d/'), hide('stdout', 'stderr'):
+    with cd('/etc/supervisor/conf.d/'), hide('everything'):
         python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
         cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.conf' % nodeshot_dir)
         cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery.conf' % nodeshot_dir)
@@ -307,7 +309,8 @@ def configure_supervisor():
 def install_postfix():
     initialize()
     initialize_server()
-    with hide('stdout', 'stderr'):
+    print(green("Installing & configuring postfix..."))
+    with hide('everything'):
         cmd('export DEBIAN_FRONTEND=noninteractive && apt-get -y install postfix')
         postfix_conf = open('%s/postfix.cf' % fabfile_dir).read()
         append(filename='/etc/postfix/main.cf', text=postfix_conf, use_sudo=True)
@@ -316,18 +319,15 @@ def install_postfix():
 
 def restart_services():
     initialize()
-    print(green("Starting Nodeshot server..."))
+    print(green("Starting nodeshot..."))
     cmd('service nginx restart && supervisorctl restart all')
     print(green("Nodeshot server started"))
     print(green("Cleaning installation directory..."))
     cmd('rm -rf ~/nodeshot_install')
-    print(green("Installation completed"))
 
 
 def completed_message():
     initialize_server()
-    print(green("Cleaning installation directory..."))
-    cmd('rm -rf ~/nodeshot_install')
     print(green("\nINSTALLATION COMPLETED !\n"))
     print(green("#############################################################"))
     print(green("                           WARNING:                         "))
