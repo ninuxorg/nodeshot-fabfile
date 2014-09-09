@@ -213,8 +213,6 @@ def install_redis():
     initialize()
     print(green("Installing redis..."))
     with hide('stdout', 'stderr'):
-        cmd('add-apt-repository -y ppa:chris-lea/redis-server')
-        cmd('apt-get -y update')
         cmd('apt-get -y --force-yes install redis-server')
         run('workon nodeshot && pip install -U celery[redis]')
         cmd('echo 1 > /proc/sys/vm/overcommit_memory')
