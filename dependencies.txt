@@ -21,3 +21,4 @@ nginx-common
 openssl
 zlib-bin
 supervisor
+openssl
