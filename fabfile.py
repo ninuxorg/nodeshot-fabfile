@@ -7,6 +7,13 @@ from fabric.contrib.files import append
 from fabric.colors import green
 
 
+# public functions
+__all__ = [
+    'install',
+    'update'
+]
+
+
 def generate_random_password():
     """ generates random password """
     return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(12))
@@ -175,7 +182,7 @@ def install_python_requirements():
 def create_project():
     initialize()
     print(green("Creating project..."))
-    
+
     cmd('mkdir -p %s' % nodeshot_dir)
     with cd(root_dir):
         cmd('workon nodeshot && nodeshot startproject %s nodeshot' % project_name)
@@ -242,7 +249,7 @@ def configure_nginx():
         cmd('cp ~/nodeshot_install/server.key .')
 
     cmd('cp /etc/nginx/uwsgi_params /etc/nginx/sites-available/')
-    
+
     nginx_conf = open('%s/nginx.conf' % fabfile_dir).read()
     append(filename='/etc/nginx/sites-available/%s' % server_name,
            text=nginx_conf,
@@ -253,7 +260,7 @@ def configure_nginx():
         cmd('sed -i \'s#PROJECT_PATH#%s#g\' %s' % (nodeshot_dir, server_name))
         cmd('sed -i \'s#PROJECT_NAME#%s#g\' %s' % (project_name, server_name))
         cmd('ln -s /etc/nginx/sites-available/%s /etc/nginx/sites-enabled/%s' % (server_name, server_name))
-    
+
     cmd('service nginx configtest')
 
 
@@ -261,12 +268,12 @@ def install_uwsgi():
     initialize()
     with hide('stdout', 'stderr'):
         cmd('pip install uwsgi')
-    
+
     uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
     append(filename='%s/uwsgi.ini' % nodeshot_dir,
            text=uwsgi_ini,
            use_sudo=True)
-    
+
     with cd(nodeshot_dir):
         python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
         cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.ini' % nodeshot_dir)
@@ -280,13 +287,13 @@ def configure_supervisor():
     with hide('stdout', 'stderr'):
         uwsgi_conf = open('%s/uwsgi.conf' % fabfile_dir).read()
         append(filename='/etc/supervisor/conf.d/uwsgi.conf', text=uwsgi_conf, use_sudo=True)
-        
+
         celery_conf = open('%s/celery.conf' % fabfile_dir).read()
         append(filename='/etc/supervisor/conf.d/celery.conf', text=celery_conf, use_sudo=True)
-        
+
         celerybeat_conf = open('%s/celery-beat.conf' % fabfile_dir).read()
         append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=True)
-        
+
         with cd('/etc/supervisor/conf.d/'):
             python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
             cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.conf' % nodeshot_dir)
@@ -296,7 +303,7 @@ def configure_supervisor():
             cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery-beat.conf' % nodeshot_dir)
             cmd('sed -i \'s#PROJECT_NAME#%s#g\' celery-beat.conf' % project_name)
             cmd('sed -i \'s#PYTHON_HOME#%s#g\' celery-beat.conf' % python_home)
-        
+
         cmd('supervisorctl update')
 
 
