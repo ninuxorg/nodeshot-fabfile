@@ -155,15 +155,12 @@ def install_dependencies():
 def create_db():
     initialize_db()
     print(green("Configuring DB..."))
-    with hide('stdout', 'stderr'):
-        cmd('su - postgres -c "createdb nodeshot"')
-        cmd('su - postgres -c "psql nodeshot -c \'CREATE EXTENSION hstore;\'"')
-        cmd('su - postgres -c "psql nodeshot -c \'CREATE EXTENSION postgis;\'"')
-        cmd('su - postgres -c "psql nodeshot -c \'CREATE EXTENSION postgis_topology;\'"')
-        cmd('su - postgres -c "createuser %s -R -S -D"'  % db_user)
-        cmd('''su - postgres -c "psql -U postgres -d postgres -c \"ALTER USER %s WITH PASSWORD '%s';\""''' % (db_user, db_pass))
-        cmd('su - postgres -c "psql -c \'GRANT ALL PRIVILEGES ON DATABASE nodeshot to %s;\'"' % db_user)
-        cmd('su - postgres -c "psql nodeshot -c \'GRANT ALL PRIVILEGES ON TABLE spatial_ref_sys TO %s;\'"' % db_user)
+    with hide('everything'):
+        db_sql = open('%s/db.sql' % fabfile_dir).read()
+        db_sql = db_sql.replace('<user>', db_user)
+        db_sql = db_sql.replace('<password>', db_pass)
+        append(filename='%s/db.sql' % tmp_dir, text=db_sql, use_sudo=True)
+        cmd('su - postgres -c "psql -f %s/db.sql"' % tmp_dir)
 
 
 def create_python_virtualenv():
