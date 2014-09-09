@@ -84,6 +84,10 @@ def initialize_dirs():
     nodeshot_dir = '%s/nodeshot' % root_dir
     fabfile_dir = os.path.dirname(__file__)
     tmp_dir = '~/nodeshot_install'
+    with hide('everything'):
+        run('mkdir -p %s' % tmp_dir)
+    with cd(tmp_dir), hide('everything'):
+        tmp_dir = run('pwd')
 
 
 def initialize_server():
@@ -115,7 +119,6 @@ def initialize_ssl():
     print(green("Please insert SSL certificate details..."))
     print(green("****************************************"))
 
-    run('mkdir -p %s' % tmp_dir)
     with cd(tmp_dir):
         run('openssl req -new -x509 -nodes -days 365 -out server.crt -keyout server.key')
 
