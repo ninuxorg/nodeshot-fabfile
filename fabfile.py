@@ -157,8 +157,8 @@ def create_db():
         cmd('su - postgres -c "psql nodeshot -c \'CREATE EXTENSION hstore;\'"')
         cmd('su - postgres -c "psql nodeshot -c \'CREATE EXTENSION postgis;\'"')
         cmd('su - postgres -c "psql nodeshot -c \'CREATE EXTENSION postgis_topology;\'"')
-        cmd('su - postgres -c "createuser %s  -R -S -D"'  % db_user)
-        cmd('sudo -u postgres psql -U postgres -c "ALTER USER %s WITH PASSWORD \'%s\';"' % (db_user, db_pass))
+        cmd('su - postgres -c "createuser %s -R -S -D"'  % db_user)
+        cmd('''su - postgres -c "psql -U postgres -d postgres -c \"ALTER USER %s WITH PASSWORD '%s';\""''' % (db_user, db_pass))
         cmd('su - postgres -c "psql -c \'GRANT ALL PRIVILEGES ON DATABASE nodeshot to %s;\'"' % db_user)
         cmd('su - postgres -c "psql nodeshot -c \'GRANT ALL PRIVILEGES ON TABLE spatial_ref_sys TO %s;\'"' % db_user)
 
