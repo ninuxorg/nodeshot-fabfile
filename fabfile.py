@@ -131,15 +131,21 @@ def install_dependencies():
         # install
         cmd('apt-get install -y %s' % dependencies)
         # install Postgis 2
-        with settings(warn_only=True):
-            postgis_installed = bool(run('dpkg --get-selections | grep "postgis\s"'))
+        with quiet():
+            postgis_installed = run('dpkg --get-selections | grep "postgis\s"').succeeded
         if not postgis_installed:
             with cd(tmp_dir):
-                cmd('wget http://download.osgeo.org/postgis/source/postgis-2.0.3.tar.gz')
-                cmd('tar xfvz postgis-2.0.3.tar.gz')
-            with cd('%s/postgis-2.0.3' % tmp_dir):
+                cmd('wget http://download.osgeo.org/postgis/source/postgis-2.1.3.tar.gz')
+                cmd('tar xfvz postgis-2.1.3.tar.gz')
+            with cd('%s/postgis-2.1.3' % tmp_dir):
                 cmd('./configure')
                 cmd('make')
+            # on debian 7 the procedure aborts if we don't do this
+            with quiet():
+                contrib_dir_exists = cmd('test -f /usr/share/postgresql/9.1/contrib').succeeded
+                if not contrib_dir_exists:
+                    cmd("mkdir -p '/usr/share/postgresql/9.1/contrib/postgis-2.1'")
+            with cd('%s/postgis-2.1.3' % tmp_dir):
                 cmd('checkinstall -y')
 
 
