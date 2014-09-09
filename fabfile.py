@@ -103,6 +103,14 @@ def initialize_db():
 
 
 def initialize_ssl():
+    with quiet():
+        openssl_installed = run('which openssl').succeeded
+
+    if not openssl_installed:
+        print(green("openssl command not found, installing it..."))
+        with hide('stdout', 'stderr'):
+            cmd('apt-get install -y openssl')
+
     print(green("****************************************"))
     print(green("Please insert SSL certificate details..."))
     print(green("****************************************"))
