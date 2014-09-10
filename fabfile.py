@@ -191,8 +191,9 @@ def install_python_requirements():
 def create_project():
     initialize()
     print(green("Creating project..."))
-    with cd(root_dir), hide('everything'):
+    with hide('everything'):
         cmd('mkdir -p %s' % nodeshot_dir)
+    with cd(root_dir), hide('everything'):
         cmd('workon nodeshot && nodeshot startproject %s nodeshot' % project_name)
     print(green("Setting permissions..."))
     with cd(nodeshot_dir), hide('everything'):
