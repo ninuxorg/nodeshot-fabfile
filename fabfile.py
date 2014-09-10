@@ -163,8 +163,10 @@ def create_db():
         db_sql = open('%s/db.sql' % fabfile_dir).read()
         db_sql = db_sql.replace('<user>', db_user)
         db_sql = db_sql.replace('<password>', db_pass)
-        append(filename='%s/db.sql' % tmp_dir, text=db_sql, use_sudo=use_sudo)
-        cmd('su - postgres -c "psql -f %s/db.sql"' % tmp_dir)
+        append(filename='/tmp/db.sql', text=db_sql, use_sudo=use_sudo)
+        cmd('chmod 777 /tmp/db.sql')
+        cmd('su - postgres -c "psql -f /tmp/db.sql"')
+        cmd('rm /tmp/db.sql')
 
 
 def create_python_virtualenv():
