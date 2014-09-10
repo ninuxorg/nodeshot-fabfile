@@ -255,6 +255,7 @@ def configure_nginx():
         cmd('cp ~/nodeshot_install/server.crt .')
         cmd('cp ~/nodeshot_install/server.key .')
         cmd('cp /etc/nginx/uwsgi_params /etc/nginx/sites-available/')
+        cmd('mkdir -p %s/public_html' % nodeshot_dir)
 
     with hide('everything'):
         nginx_conf = open('%s/nginx.conf' % fabfile_dir).read()
