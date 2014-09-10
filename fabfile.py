@@ -249,6 +249,7 @@ def sync_data(update=None):
         sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
     with cd(nodeshot_dir), hide('everything'):
         run('workon nodeshot && %s' % sync_command)
+        cmd('rm log/*.log')
 
 
 def create_admin():
