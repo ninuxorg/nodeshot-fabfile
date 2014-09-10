@@ -84,12 +84,16 @@ def initialize_dirs():
     global nodeshot_dir
     global fabfile_dir
     global install_dir
+    global workon_home
+    global python_home
     global use_sudo
     root_dir = prompt('Set install directory (including trailing slash): ', default='/var/www')
     project_name = prompt('Set project name: ', default='myproject')
     nodeshot_dir = '%s/nodeshot' % root_dir
     fabfile_dir = os.path.dirname(__file__)
     install_dir = '~/nodeshot_install'
+    workon_home = '/usr/local/lib/virtualenvs'
+    python_home = '{0}/nodeshot'.format(workon_home)
     with quiet():
         use_sudo = env['user'] != 'root'
 
@@ -134,7 +138,6 @@ def create_install_dir():
         run('mkdir -p %s' % install_dir)
     with cd(install_dir), hide('everything'):
         install_dir = run('pwd')
-
 
 
 def install_dependencies():
@@ -184,9 +187,12 @@ def create_python_virtualenv():
     print(green("Creating virtual env..."))
     with hide('everything'):
         cmd('pip install virtualenvwrapper')
+        cmd("echo 'export WORKON_HOME={workon_home}' >> /usr/local/bin/virtualenvwrapper.sh".format(workon_home=workon_home))
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> ~/.bash_profile")
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> /root/.bashrc")
-        cmd("chown -R {user}:{user} ~/.virtualenvs".format(user=env['user']))
+        cmd('mkdir -p {0}'.format(workon_home))
+        cmd("chown -R {user}:{user} {workon_home}".format(user=env['user'], workon_home=workon_home))
+        cmd('chmod -R 775 {workon_home}'.format(workon_home=workon_home))
         run('mkvirtualenv nodeshot')
 
 
@@ -289,7 +295,6 @@ def install_uwsgi():
         uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
         uwsgi_ini = uwsgi_ini.replace('<nodeshot_dir>', nodeshot_dir)
         uwsgi_ini = uwsgi_ini.replace('<project_name>', project_name)
-        python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
         uwsgi_ini = uwsgi_ini.replace('<python_home>', python_home)
         append(filename='%s/uwsgi.ini' % nodeshot_dir,
                text=uwsgi_ini,
@@ -303,8 +308,6 @@ def configure_supervisor():
         uwsgi_conf = open('%s/uwsgi.conf' % fabfile_dir).read()
         uwsgi_conf = uwsgi_conf.replace('<nodeshot_dir>', nodeshot_dir)
         append(filename='/etc/supervisor/conf.d/uwsgi.conf', text=uwsgi_conf, use_sudo=use_sudo)
-
-        python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
 
         celery_conf = open('%s/celery.conf' % fabfile_dir).read()
         celery_conf = celery_conf.replace('<nodeshot_dir>', nodeshot_dir)
