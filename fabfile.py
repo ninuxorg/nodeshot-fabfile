@@ -290,24 +290,28 @@ def configure_supervisor():
     print(green("Installing & configuring supervisor..."))
     with hide('everything'):
         uwsgi_conf = open('%s/uwsgi.conf' % fabfile_dir).read()
+        uwsgi_conf = uwsgi_conf.replace('<nodeshot_dir>', nodeshot_dir)
         append(filename='/etc/supervisor/conf.d/uwsgi.conf', text=uwsgi_conf, use_sudo=use_sudo)
 
+        python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
+
         celery_conf = open('%s/celery.conf' % fabfile_dir).read()
+        celery_conf = celery_conf.replace('<nodeshot_dir>', nodeshot_dir)
+        celery_conf = celery_conf.replace('<project_name>', project_name)
+        celery_conf = celery_conf.replace('<python_home>', python_home)
         append(filename='/etc/supervisor/conf.d/celery.conf', text=celery_conf, use_sudo=use_sudo)
 
         celerybeat_conf = open('%s/celery-beat.conf' % fabfile_dir).read()
+        celerybeat_conf = celerybeat_conf.replace('<nodeshot_dir>', nodeshot_dir)
+        celerybeat_conf = celerybeat_conf.replace('<project_name>', project_name)
+        celerybeat_conf = celerybeat_conf.replace('<python_home>', python_home)
         append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=use_sudo)
 
-    with cd('/etc/supervisor/conf.d/'), hide('everything'):
-        python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.conf' % nodeshot_dir)
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery.conf' % nodeshot_dir)
-        cmd('sed -i \'s#PROJECT_NAME#%s#g\' celery.conf' % project_name)
-        cmd('sed -i \'s#PYTHON_HOME#%s#g\' celery.conf' % python_home)
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' celery-beat.conf' % nodeshot_dir)
-        cmd('sed -i \'s#PROJECT_NAME#%s#g\' celery-beat.conf' % project_name)
-        cmd('sed -i \'s#PYTHON_HOME#%s#g\' celery-beat.conf' % python_home)
         cmd('supervisorctl update')
+
+        # check all processes are running correctly
+        # TODO
+
 
 
 def install_postfix():
