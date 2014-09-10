@@ -1,6 +1,7 @@
 import os
 import string
 import random
+from time import sleep
 
 from fabric.api import *
 from fabric.contrib.files import append
@@ -48,6 +49,7 @@ def install():
     install_postfix()
     restart_services()
     remove_install_dir()
+    check_supervisor_processes()
     completed_message()
 
 
@@ -65,6 +67,7 @@ def update(**kwargs):
     sync_data(update=True)
     restart_services()
     print(green("UPDATE COMPLETED !"))
+    check_supervisor_processes()
 
 
 # ------ internal functions ------ #
@@ -317,9 +320,6 @@ def configure_supervisor():
 
         cmd('supervisorctl update')
 
-        # check all processes are running correctly
-        # TODO
-
 
 def install_postfix():
     initialize()
@@ -334,16 +334,40 @@ def install_postfix():
 
 def restart_services():
     initialize()
-    print(green("Starting nodeshot..."))
-    cmd('service nginx restart && supervisorctl restart all')
-    print(green("Nodeshot server started"))
-    print(green("Cleaning installation directory..."))
+    print(green("Restarting nginx..."))
+    with hide('everything'):
+        cmd('service nginx restart')
+    print(green("Restarting processes..."))
+    with hide('everything'):
+        cmd('supervisorctl restart all')
 
 
 def remove_install_dir():
     print(green("Removing install dir..."))
     with hide('everything'):
         cmd('rm -rf ~/nodeshot_install')
+
+
+def check_supervisor_processes():
+    print(green("Checking processes are running correctly..."))
+    with hide('everything'):
+        while True:
+            processes = {
+                'uwsgi': False,
+                'celery': False,
+                'celery-beat': False
+            }
+            for process in processes.keys():
+                output = cmd('supervisorctl status {0}'.format(process))
+                if 'RUNNING' in output:
+                    processes[process] = True
+                elif 'STARTING' not in output:
+                    abort('{0} process failed to start'.format(process))
+
+            if processes.values() == [True] * len(processes.values()):
+                break
+            else:
+                sleep(1)
 
 
 def completed_message():
