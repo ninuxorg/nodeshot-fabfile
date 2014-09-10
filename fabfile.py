@@ -5,7 +5,7 @@ from time import sleep
 
 from fabric.api import *
 from fabric.contrib.files import append
-from fabric.colors import green
+from fabric.colors import green, magenta
 
 
 # public functions
@@ -66,8 +66,8 @@ def update(**kwargs):
     install_python_requirements()
     sync_data(update=True)
     restart_services()
-    print(green("UPDATE COMPLETED !"))
     check_supervisor_processes()
+    print(magenta("Updated completed"))
 
 
 # ------ internal functions ------ #
@@ -372,9 +372,9 @@ def check_supervisor_processes():
 
 def completed_message():
     initialize_server()
-    print(green("\nINSTALLATION COMPLETED !\n"))
-    print(green("#############################################################"))
-    print(green("                           WARNING:                         "))
-    print(green(" Superuser is currently set as 'admin' with password 'admin'"))
-    print(green(" Log in on https://%s/admin and change it " % server_name))
-    print(green("#############################################################"))
+    print(magenta("\nINSTALLATION COMPLETED !\n"))
+    print(magenta("#############################################################"))
+    print(magenta("                           WARNING:                         "))
+    print(magenta(" Superuser is currently set as 'admin' with password 'admin'"))
+    print(magenta(" Log in on https://%s/admin and change it " % server_name))
+    print(magenta("#############################################################"))
