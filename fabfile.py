@@ -276,15 +276,13 @@ def install_uwsgi():
     with hide('everything'):
         cmd('pip install uwsgi')
         uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
+        uwsgi_ini = uwsgi_ini.replace('<nodeshot_dir>', nodeshot_dir)
+        uwsgi_ini = uwsgi_ini.replace('<project_name>', project_name)
+        python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
+        uwsgi_ini = uwsgi_ini.replace('<python_home>', python_home)
         append(filename='%s/uwsgi.ini' % nodeshot_dir,
                text=uwsgi_ini,
                use_sudo=use_sudo)
-
-    with cd(nodeshot_dir), hide('everything'):
-        python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' uwsgi.ini' % nodeshot_dir)
-        cmd('sed -i \'s#PROJECT_NAME#%s#g\' uwsgi.ini' % project_name)
-        cmd('sed -i \'s#PYTHON_HOME#%s#g\' uwsgi.ini' % python_home)
 
 
 def configure_supervisor():
