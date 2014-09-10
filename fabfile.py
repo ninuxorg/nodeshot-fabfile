@@ -313,7 +313,6 @@ def configure_supervisor():
         # TODO
 
 
-
 def install_postfix():
     initialize()
     initialize_server()
@@ -321,8 +320,8 @@ def install_postfix():
     with hide('everything'):
         cmd('export DEBIAN_FRONTEND=noninteractive && apt-get -y install postfix')
         postfix_conf = open('%s/postfix.cf' % fabfile_dir).read()
+        postfix_conf = postfix_conf.replace('<server_name>', server_name)
         append(filename='/etc/postfix/main.cf', text=postfix_conf, use_sudo=use_sudo)
-        cmd('sed -i \'s#nodeshot.yourdomain.com#%s#g\' /etc/postfix/main.cf' % server_name)
 
 
 def restart_services():
