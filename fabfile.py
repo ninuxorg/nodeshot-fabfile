@@ -186,7 +186,7 @@ def create_python_virtualenv():
     initialize()
     print(green("Creating virtual env..."))
     with hide('everything'):
-        cmd('pip install virtualenvwrapper')
+        cmd('pip install --use-mirrors virtualenvwrapper')
         cmd("echo 'export WORKON_HOME={workon_home}' >> /usr/local/bin/virtualenvwrapper.sh".format(workon_home=workon_home))
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> ~/.bash_profile")
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> /root/.bashrc")
@@ -200,8 +200,8 @@ def install_python_requirements():
     initialize()
     print(green("Installing requirements. This will take a while, sit back and relax..."))
     with hide('everything'):
-        run('workon nodeshot && pip install -U distribute')
-        run('workon nodeshot && pip install -U https://github.com/ninuxorg/nodeshot/tarball/master')
+        run('workon nodeshot && pip install --use-mirrors -U distribute')
+        run('workon nodeshot && pip install --use-mirrors -U https://github.com/ninuxorg/nodeshot/tarball/master')
 
 
 def create_project():
@@ -236,7 +236,7 @@ def install_redis():
     print(green("Installing redis..."))
     with hide('everything'):
         cmd('apt-get -y --force-yes install redis-server')
-        run('workon nodeshot && pip install -U celery[redis]')
+        run('workon nodeshot && pip install --use-mirrors -U celery[redis]')
         cmd('echo 1 > /proc/sys/vm/overcommit_memory')
         cmd('service redis-server restart')
 
@@ -292,7 +292,7 @@ def install_uwsgi():
     initialize()
     print(green("Installing uwsgi..."))
     with hide('everything'):
-        cmd('pip install uwsgi')
+        cmd('pip install --use-mirrors uwsgi')
         uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
         uwsgi_ini = uwsgi_ini.replace('<nodeshot_dir>', nodeshot_dir)
         uwsgi_ini = uwsgi_ini.replace('<project_name>', project_name)
