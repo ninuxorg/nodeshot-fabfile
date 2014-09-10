@@ -80,6 +80,7 @@ def initialize_dirs():
     global nodeshot_dir
     global fabfile_dir
     global tmp_dir
+    global use_sudo
     root_dir = prompt('Set install directory (including trailing slash): ', default='/var/www')
     project_name = prompt('Set project name: ', default='myproject')
     nodeshot_dir = '%s/nodeshot' % root_dir
@@ -89,6 +90,8 @@ def initialize_dirs():
         run('mkdir -p %s' % tmp_dir)
     with cd(tmp_dir), hide('everything'):
         tmp_dir = run('pwd')
+    with quiet():
+        use_sudo = env['user'] != 'root'
 
 
 def initialize_server():
@@ -160,7 +163,7 @@ def create_db():
         db_sql = open('%s/db.sql' % fabfile_dir).read()
         db_sql = db_sql.replace('<user>', db_user)
         db_sql = db_sql.replace('<password>', db_pass)
-        append(filename='%s/db.sql' % tmp_dir, text=db_sql, use_sudo=True)
+        append(filename='%s/db.sql' % tmp_dir, text=db_sql, use_sudo=use_sudo)
         cmd('su - postgres -c "psql -f %s/db.sql"' % tmp_dir)
 
 
@@ -254,7 +257,7 @@ def configure_nginx():
         nginx_conf = open('%s/nginx.conf' % fabfile_dir).read()
         append(filename='/etc/nginx/sites-available/%s' % server_name,
                text=nginx_conf,
-               use_sudo=True)
+               use_sudo=use_sudo)
 
     with cd('/etc/nginx/sites-available'), hide('everything'):
         cmd('sed -i \'s#nodeshot.yourdomain.com#%s#g\' %s' % (server_name, server_name))
@@ -272,7 +275,7 @@ def install_uwsgi():
         uwsgi_ini = open('%s/uwsgi.ini' % fabfile_dir).read()
         append(filename='%s/uwsgi.ini' % nodeshot_dir,
                text=uwsgi_ini,
-               use_sudo=True)
+               use_sudo=use_sudo)
 
     with cd(nodeshot_dir), hide('everything'):
         python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
@@ -286,13 +289,13 @@ def configure_supervisor():
     print(green("Installing & configuring supervisor..."))
     with hide('everything'):
         uwsgi_conf = open('%s/uwsgi.conf' % fabfile_dir).read()
-        append(filename='/etc/supervisor/conf.d/uwsgi.conf', text=uwsgi_conf, use_sudo=True)
+        append(filename='/etc/supervisor/conf.d/uwsgi.conf', text=uwsgi_conf, use_sudo=use_sudo)
 
         celery_conf = open('%s/celery.conf' % fabfile_dir).read()
-        append(filename='/etc/supervisor/conf.d/celery.conf', text=celery_conf, use_sudo=True)
+        append(filename='/etc/supervisor/conf.d/celery.conf', text=celery_conf, use_sudo=use_sudo)
 
         celerybeat_conf = open('%s/celery-beat.conf' % fabfile_dir).read()
-        append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=True)
+        append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=use_sudo)
 
     with cd('/etc/supervisor/conf.d/'), hide('everything'):
         python_home = '%s/nodeshot' % run('echo $WORKON_HOME')
@@ -313,7 +316,7 @@ def install_postfix():
     with hide('everything'):
         cmd('export DEBIAN_FRONTEND=noninteractive && apt-get -y install postfix')
         postfix_conf = open('%s/postfix.cf' % fabfile_dir).read()
-        append(filename='/etc/postfix/main.cf', text=postfix_conf, use_sudo=True)
+        append(filename='/etc/postfix/main.cf', text=postfix_conf, use_sudo=use_sudo)
         cmd('sed -i \'s#nodeshot.yourdomain.com#%s#g\' /etc/postfix/main.cf' % server_name)
 
 
