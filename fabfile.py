@@ -5,7 +5,7 @@ from time import sleep
 
 from fabric.api import *
 from fabric.contrib.files import append
-from fabric.colors import green, magenta
+from fabric.colors import green, magenta, red
 
 
 # public functions
@@ -67,7 +67,7 @@ def update(**kwargs):
     sync_data(update=True)
     restart_services()
     check_supervisor_processes()
-    print(magenta("Updated completed"))
+    print(magenta("Update operation completed"))
 
 
 # ------ internal functions ------ #
@@ -140,7 +140,7 @@ def create_install_dir():
 def install_dependencies():
     initialize()
     print(green("Installing required packages. This will take a bit of time to download..."))
-    with hide('stdout', 'stderr'):
+    with hide('everything'):
         cmd('apt-get update -y')
         path = '{path}/dependencies.txt'.format(path=fabfile_dir)
         # read dependencies, put them on one line
@@ -193,7 +193,7 @@ def create_python_virtualenv():
 def install_python_requirements():
     initialize()
     print(green("Installing requirements. This will take a while, sit back and relax..."))
-    with hide('stdout', 'stderr'):
+    with hide('everything'):
         run('workon nodeshot && pip install -U distribute')
         run('workon nodeshot && pip install -U https://github.com/ninuxorg/nodeshot/tarball/master')
 
@@ -372,9 +372,7 @@ def check_supervisor_processes():
 
 def completed_message():
     initialize_server()
-    print(magenta("\nINSTALLATION COMPLETED !\n"))
-    print(magenta("#############################################################"))
-    print(magenta("                           WARNING:                         "))
-    print(magenta(" Superuser is currently set as 'admin' with password 'admin'"))
-    print(magenta(" Log in on https://%s/admin and change it " % server_name))
-    print(magenta("#############################################################"))
+    print(magenta("\nInstallation completed!\n"))
+    print(red("WARNING:"))
+    print(red("Superuser is currently set as 'admin' with password 'admin'"))
+    print(red("Log in on https://%s/admin and change it" % server_name))
