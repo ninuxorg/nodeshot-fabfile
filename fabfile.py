@@ -237,7 +237,7 @@ def install_redis():
 
 def sync_data(update=None):
     initialize()
-    print(green("Initializing nodeshot..."))
+    print(green("Running syncdb, migrate and collectstatic..."))
     sync_command = './manage.py syncdb --noinput && ./manage.py migrate && ./manage.py collectstatic --noinput'
     if update is not None:
         sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
