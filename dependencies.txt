@@ -14,11 +14,14 @@ gdal-bin
 libpq-dev
 libgdal1-dev
 python-gdal
-wget
-checkinstall
 libjson0-dev
 nginx-full
 nginx-common
 openssl
 zlib-bin
 supervisor
+checkinstall
+wget
+iputils-ping
+host
+traceroute
