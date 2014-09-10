@@ -31,6 +31,7 @@ def install():
     initialize()
     initialize_server()
     initialize_db()
+    create_install_dir()
     initialize_ssl()
     install_dependencies()
     create_db()
@@ -46,6 +47,7 @@ def install():
     configure_supervisor()
     install_postfix()
     restart_services()
+    remove_install_dir()
     completed_message()
 
 
@@ -78,17 +80,13 @@ def initialize_dirs():
     global project_name
     global nodeshot_dir
     global fabfile_dir
-    global tmp_dir
+    global install_dir
     global use_sudo
     root_dir = prompt('Set install directory (including trailing slash): ', default='/var/www')
     project_name = prompt('Set project name: ', default='myproject')
     nodeshot_dir = '%s/nodeshot' % root_dir
     fabfile_dir = os.path.dirname(__file__)
-    tmp_dir = '~/nodeshot_install'
-    with hide('everything'):
-        run('mkdir -p %s' % tmp_dir)
-    with cd(tmp_dir), hide('everything'):
-        tmp_dir = run('pwd')
+    install_dir = '~/nodeshot_install'
     with quiet():
         use_sudo = env['user'] != 'root'
 
@@ -122,8 +120,18 @@ def initialize_ssl():
     print(green("Please insert SSL certificate details..."))
     print(green("****************************************"))
 
-    with cd(tmp_dir):
+    with cd(install_dir):
         run('openssl req -new -x509 -nodes -days 365 -out server.crt -keyout server.key')
+
+
+def create_install_dir():
+    global install_dir
+    print(green("Creating install dir..."))
+    with hide('everything'):
+        run('mkdir -p %s' % install_dir)
+    with cd(install_dir), hide('everything'):
+        install_dir = run('pwd')
+
 
 
 def install_dependencies():
@@ -140,10 +148,10 @@ def install_dependencies():
         with quiet():
             postgis_installed = run('dpkg --get-selections | grep "postgis\s"').succeeded
         if not postgis_installed:
-            with cd(tmp_dir):
+            with cd(install_dir):
                 cmd('wget http://download.osgeo.org/postgis/source/postgis-2.1.3.tar.gz')
                 cmd('tar xfvz postgis-2.1.3.tar.gz')
-            with cd('%s/postgis-2.1.3' % tmp_dir):
+            with cd('%s/postgis-2.1.3' % install_dir):
                 cmd('./configure')
                 cmd('make')
             # on debian 7 the procedure aborts if we don't do this
@@ -151,7 +159,7 @@ def install_dependencies():
                 contrib_dir_exists = cmd('test -f /usr/share/postgresql/9.1/contrib').succeeded
                 if not contrib_dir_exists:
                     cmd("mkdir -p '/usr/share/postgresql/9.1/contrib/postgis-2.1'")
-            with cd('%s/postgis-2.1.3' % tmp_dir):
+            with cd('%s/postgis-2.1.3' % install_dir):
                 cmd('checkinstall -y')
 
 
@@ -330,7 +338,12 @@ def restart_services():
     cmd('service nginx restart && supervisorctl restart all')
     print(green("Nodeshot server started"))
     print(green("Cleaning installation directory..."))
-    cmd('rm -rf ~/nodeshot_install')
+
+
+def remove_install_dir():
+    print(green("Removing install dir..."))
+    with hide('everything'):
+        cmd('rm -rf ~/nodeshot_install')
 
 
 def completed_message():
