@@ -52,7 +52,6 @@ def install():
 def update(**kwargs):
     global root_dir
     global fabfile_dir
-    global project_dir
     global project_name
     root_dir = kwargs.get('root_dir', '/var/www')  # defaults to /var/www/
     project_name = kwargs.get('project_name')
@@ -259,15 +258,15 @@ def configure_nginx():
 
     with hide('everything'):
         nginx_conf = open('%s/nginx.conf' % fabfile_dir).read()
+        nginx_conf = nginx_conf.replace('<server_name>', server_name)
+        nginx_conf = nginx_conf.replace('<nodeshot_dir>', nodeshot_dir)
+        nginx_conf = nginx_conf.replace('<project_name>', project_name)
         append(filename='/etc/nginx/sites-available/%s' % server_name,
                text=nginx_conf,
                use_sudo=use_sudo)
 
     with cd('/etc/nginx/sites-available'), hide('everything'):
-        cmd('sed -i \'s#nodeshot.yourdomain.com#%s#g\' %s' % (server_name, server_name))
-        cmd('sed -i \'s#PROJECT_PATH#%s#g\' %s' % (nodeshot_dir, server_name))
-        cmd('sed -i \'s#PROJECT_NAME#%s#g\' %s' % (project_name, server_name))
-        cmd('ln -s /etc/nginx/sites-available/%s /etc/nginx/sites-enabled/%s' % (server_name, server_name))
+        cmd('ln -s /etc/nginx/sites-available/{0} /etc/nginx/sites-enabled/{0}'.format(server_name))
         cmd('service nginx configtest')
 
 
