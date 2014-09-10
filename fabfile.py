@@ -249,7 +249,6 @@ def sync_data(update=None):
         sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
     with cd(nodeshot_dir), hide('everything'):
         run('workon nodeshot && %s' % sync_command)
-        cmd('rm log/*.log')
 
 
 def create_admin():
@@ -258,7 +257,7 @@ def create_admin():
     create_admin_oneliner = """echo "from nodeshot.community.profiles.models import Profile;\
                             Profile.objects.create_superuser('admin', '', 'admin')" | ./manage.py shell"""
     with cd(nodeshot_dir), hide('everything'):
-        cmd('workon nodeshot && %s' % create_admin_oneliner)
+        run('workon nodeshot && %s' % create_admin_oneliner)
 
 
 def configure_nginx():
@@ -322,6 +321,7 @@ def configure_supervisor():
         celerybeat_conf = celerybeat_conf.replace('<python_home>', python_home)
         append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=use_sudo)
 
+        cmd('rm {0}/log/*.log'.format(nodeshot_dir))
         cmd('supervisorctl update')
 
 
