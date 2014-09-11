@@ -158,6 +158,11 @@ def initialize_ssl(use_defaults=False):
         run(openssl_command)
 
 
+def _set_log_permissions():
+    cmd('chown -R {user}:www-data {path}/log'.format(user=env['user'], path=nodeshot_dir))
+    cmd('chmod -R 775 {path}/log'.format(path=nodeshot_dir))
+
+
 def create_install_dir():
     global install_dir
     print(green("Creating install dir..."))
@@ -275,6 +280,7 @@ def sync_data(update=None):
     if update is not None:
         sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
     with cd(nodeshot_dir), hide('everything'):
+        _set_log_permissions()
         run('workon nodeshot && %s' % sync_command)
 
 
@@ -348,7 +354,7 @@ def configure_supervisor():
         celerybeat_conf = celerybeat_conf.replace('<python_home>', python_home)
         append(filename='/etc/supervisor/conf.d/celery-beat.conf', text=celerybeat_conf, use_sudo=use_sudo)
 
-        cmd('rm {0}/log/*.log'.format(nodeshot_dir))
+        _set_log_permissions()
         cmd('supervisorctl update')
 
 
@@ -370,6 +376,7 @@ def restart_services():
         cmd('service nginx restart')
     print(green("Restarting processes..."))
     with hide('everything'):
+        _set_log_permissions()
         cmd('supervisorctl restart all')
 
 
