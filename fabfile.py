@@ -28,12 +28,20 @@ def cmd(*args, **kwargs):
         return sudo(*args, **kwargs)
 
 
-def install():
-    initialize()
-    initialize_server()
-    initialize_db()
+defaults = {
+    'root_dir': '/var/www',
+    'project_name': 'myproject',
+    'db_user': 'nodeshot',
+    'db_pass': generate_random_password()
+}
+
+
+def install(use_defaults=False):
+    initialize(use_defaults)
+    initialize_server(use_defaults)
+    initialize_db(use_defaults)
     create_install_dir()
-    initialize_ssl()
+    initialize_ssl(use_defaults)
     install_dependencies()
     create_db()
     create_python_virtualenv()
@@ -57,12 +65,14 @@ def update(**kwargs):
     global root_dir
     global fabfile_dir
     global project_name
-    root_dir = kwargs.get('root_dir', '/var/www')  # defaults to /var/www/
+
+    use_defaults = kwargs.get('use_defaults', False)
+    root_dir = kwargs.get('root_dir')
     project_name = kwargs.get('project_name')
     # if no parameter supplied
     if project_name is None:
         # ask
-        initialize_dirs()
+        initialize_dirs(use_defaults)
     install_python_requirements()
     sync_data(update=True)
     restart_services()
@@ -73,12 +83,12 @@ def update(**kwargs):
 # ------ internal functions ------ #
 
 
-def initialize():
+def initialize(use_defaults=False):
     if 'root_dir' not in globals():
-        initialize_dirs()
+        initialize_dirs(use_defaults)
 
 
-def initialize_dirs():
+def initialize_dirs(use_defaults):
     global root_dir
     global project_name
     global nodeshot_dir
@@ -87,8 +97,14 @@ def initialize_dirs():
     global workon_home
     global python_home
     global use_sudo
-    root_dir = prompt('Set install directory (including trailing slash): ', default='/var/www')
-    project_name = prompt('Set project name: ', default='myproject')
+
+    if not use_defaults:
+        root_dir = prompt('Set install directory (including trailing slash): ', default=defaults['root_dir'])
+        project_name = prompt('Set project name: ', default=defaults['project_name'])
+    else:
+        root_dir = defaults['root_dir']
+        project_name = defaults['project_name']
+
     nodeshot_dir = '%s/nodeshot' % root_dir
     fabfile_dir = os.path.dirname(__file__)
     install_dir = '~/nodeshot_install'
@@ -98,23 +114,30 @@ def initialize_dirs():
         use_sudo = env['user'] != 'root'
 
 
-def initialize_server():
+def initialize_server(use_defaults=False):
     if 'server_name' not in globals():
         global server_name
-        server_name = prompt('Server name: ', default=env['host'])
+        if not use_defaults:
+            server_name = prompt('Server name: ', default=env['host'])
+        else:
+            server_name = env['host']
 
 
-def initialize_db():
+def initialize_db(use_defaults=False):
     db_params = ('db_user','db_pass')
     for db_param in db_params:
         if db_param not in globals():
             global db_user
             global db_pass
-            db_user = prompt('Set database user: ', default='nodeshot')
-            db_pass = prompt('Set database user password: ', default=generate_random_password())
+            if not use_defaults:
+                db_user = prompt('Set database user: ', default=defaults['db_user'])
+                db_pass = prompt('Set database user password: ', default=defaults['db_pass'])
+            else:
+                db_user = defaults['db_user']
+                db_pass = defaults['db_pass']
 
 
-def initialize_ssl():
+def initialize_ssl(use_defaults=False):
     with quiet():
         openssl_installed = run('which openssl').succeeded
 
@@ -127,8 +150,12 @@ def initialize_ssl():
     print(green("Please insert SSL certificate details..."))
     print(green("****************************************"))
 
+    openssl_command = 'openssl req -new -x509 -nodes -days 1095 -out server.crt -keyout server.key'
+    if(use_defaults):
+        openssl_command = '{0} -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN={1}"'.format(openssl_command, server_name)
+
     with cd(install_dir):
-        run('openssl req -new -x509 -nodes -days 365 -out server.crt -keyout server.key')
+        run(openssl_command)
 
 
 def create_install_dir():
