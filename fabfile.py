@@ -37,6 +37,7 @@ defaults = {
 
 
 def install(use_defaults=False):
+    get_os_version()
     initialize(use_defaults)
     initialize_server(use_defaults)
     initialize_db(use_defaults)
@@ -175,6 +176,24 @@ def create_install_dir():
         run('mkdir -p %s' % install_dir)
     with cd(install_dir), hide('everything'):
         install_dir = run('pwd')
+
+
+def get_os_version():
+    global version
+
+    version_file = 'Unknown'
+    with quiet():
+        version_file = cmd('cat /etc/issue')
+
+    version_file = version_file.replace('\\n', '').replace('\l', '').strip()
+
+    if 'Debian' in version_file and '7' in version_file:
+        version = 'debian7'
+    elif 'Ubuntu' in version_file and '13' in version_file:
+        version = 'ubuntu13'
+    else:
+        print red('{0} is not supported by this install script.'.format(version_file))
+        abort('Unsupported Linux Distribution')
 
 
 def install_dependencies():
