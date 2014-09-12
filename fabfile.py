@@ -4,7 +4,7 @@ import random
 from time import sleep
 
 from fabric.api import *
-from fabric.contrib.files import append
+from fabric.contrib.files import append, exists
 from fabric.colors import green, magenta, red
 
 
@@ -73,6 +73,11 @@ def update(**kwargs):
     if project_name is None:
         # ask
         initialize_dirs(use_defaults)
+
+    if not exists(nodeshot_dir, use_sudo=use_sudo):
+        print red('{0} directory not found!'.format(nodeshot_dir))
+        abort('Nodeshot is not installed on this server.')
+
     install_python_requirements()
     sync_data(update=True)
     restart_services()
