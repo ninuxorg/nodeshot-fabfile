@@ -294,7 +294,8 @@ def install_redis():
         cmd('apt-get -y --force-yes install redis-server')
         run('workon nodeshot && pip install --use-mirrors -U celery[redis]')
         cmd('echo 1 > /proc/sys/vm/overcommit_memory')
-        cmd('service redis-server restart')
+        cmd('service redis-server start')
+        sleep(5)
 
 
 def sync_data(update=None):
