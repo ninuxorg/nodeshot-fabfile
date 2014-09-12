@@ -435,6 +435,6 @@ def check_supervisor_processes():
 def completed_message():
     initialize_server()
     print(magenta("\nInstallation completed!\n"))
-    print(red("WARNING:"))
-    print(red("Superuser is currently set as 'admin' with password 'admin'"))
-    print(red("Log in on https://%s/admin and change it" % server_name))
+    print(magenta("WARNING:"))
+    print(magenta("Superuser is currently set as 'admin' with password 'admin'"))
+    print(magenta("Log in on https://%s/admin and change it" % server_name))
