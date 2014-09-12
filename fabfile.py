@@ -191,6 +191,8 @@ def get_os_version():
         version = 'debian7'
     elif 'Ubuntu' in version_file and '13' in version_file:
         version = 'ubuntu13'
+    elif 'Ubuntu' in version_file and '14' in version_file:
+        version = 'ubuntu14'
     else:
         print red('{0} is not supported by this install script.'.format(version_file))
         abort('Unsupported Linux Distribution')
@@ -204,6 +206,11 @@ def install_dependencies():
         path = '{path}/dependencies.txt'.format(path=fabfile_dir)
         # read dependencies, put them on one line
         dependencies = ' '.join([line.replace('\n', '') for line in open(path).readlines()])
+
+        if version == 'ubuntu14':
+            dependencies = dependencies.replace('postgresql-9.1', 'postgresql')
+            dependencies = dependencies.replace('postgresql-server-dev-9.1', 'postgresql-server-dev-9.3')
+
         # install
         cmd('apt-get install -y %s' % dependencies)
         # install Postgis 2
