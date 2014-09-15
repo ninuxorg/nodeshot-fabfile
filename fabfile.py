@@ -225,8 +225,7 @@ def install_dependencies():
                 cmd('make')
             # on debian 7 the procedure aborts if we don't do this
             with quiet():
-                contrib_dir_exists = cmd('test -f /usr/share/postgresql/9.1/contrib').succeeded
-                if not contrib_dir_exists:
+                if not exists('/usr/share/postgresql/9.1/contrib', use_sudo=use_sudo):
                     cmd("mkdir -p '/usr/share/postgresql/9.1/contrib/postgis-2.1'")
             with cd('%s/postgis-2.1.3' % install_dir):
                 cmd('checkinstall -y')
