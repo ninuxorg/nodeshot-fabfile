@@ -64,16 +64,19 @@ def install(use_defaults=False):
 
 def update(**kwargs):
     global root_dir
-    global fabfile_dir
     global project_name
+    global fabfile_dir
 
     use_defaults = kwargs.get('use_defaults', False)
-    root_dir = kwargs.get('root_dir')
-    project_name = kwargs.get('project_name')
-    # if no parameter supplied
-    if project_name is None:
-        # ask
-        initialize_dirs(use_defaults)
+
+    # init default globals
+    initialize_dirs(use_defaults)
+
+    if kwargs.get('root_dir'):
+        root_dir = kwargs.get('root_dir')
+
+    if kwargs.get('project_name'):
+        project_name = kwargs.get('project_name')
 
     if not exists(nodeshot_dir, use_sudo=use_sudo):
         print red('{0} directory not found!'.format(nodeshot_dir))
