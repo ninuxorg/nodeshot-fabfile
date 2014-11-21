@@ -253,8 +253,8 @@ def create_python_virtualenv():
     with hide('everything'):
         cmd('pip install virtualenvwrapper')
         cmd("echo 'export WORKON_HOME={workon_home}' >> /usr/local/bin/virtualenvwrapper.sh".format(workon_home=workon_home))
+        cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> ~/.bashrc")
         cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> ~/.bash_profile")
-        cmd("echo 'source /usr/local/bin/virtualenvwrapper.sh' >> /root/.bashrc")
         cmd('mkdir -p {0}'.format(workon_home))
         cmd("chown -R {user}:{user} {workon_home}".format(user=env['user'], workon_home=workon_home))
         cmd('chmod -R 775 {workon_home}'.format(workon_home=workon_home))
