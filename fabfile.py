@@ -82,8 +82,6 @@ def update(**kwargs):
         print red('{0} directory not found!'.format(nodeshot_dir))
         abort('Nodeshot is not installed on this server.')
 
-    get_os_version()
-    install_dependencies()
     install_python_requirements()
     sync_data(update=True)
     restart_services()
@@ -135,7 +133,7 @@ def initialize_server(use_defaults=False):
 
 
 def initialize_db(use_defaults=False):
-    db_params = ('db_user', 'db_pass')
+    db_params = ('db_user','db_pass')
     for db_param in db_params:
         if db_param not in globals():
             global db_user
