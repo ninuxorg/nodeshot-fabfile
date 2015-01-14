@@ -19,6 +19,7 @@ nginx-full
 nginx-common
 openssl
 zlib-bin
+libjpeg-dev
 supervisor
 checkinstall
 wget
