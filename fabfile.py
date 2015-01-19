@@ -302,7 +302,8 @@ def install_redis():
     with hide('everything'):
         cmd('apt-get -y --force-yes install redis-server')
         run('workon nodeshot && pip install -U celery[redis]')
-        cmd('echo 1 > /proc/sys/vm/overcommit_memory')
+        with warn_only():
+            cmd('echo 1 > /proc/sys/vm/overcommit_memory')
         cmd('service redis-server start')
         sleep(5)
 
