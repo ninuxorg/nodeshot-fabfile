@@ -311,12 +311,13 @@ def install_redis():
 def sync_data(update=None):
     initialize()
     print(green("Running syncdb, migrate and collectstatic..."))
-    sync_command = './manage.py syncdb --noinput && ./manage.py migrate && ./manage.py collectstatic --noinput'
-    if update is not None:
-        sync_command = './manage.py syncdb --no-initial-data && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
+    sync_command = './manage.py syncdb --no-initial-data --noinput && ./manage.py migrate --no-initial-data && ./manage.py collectstatic --noinput'
     with cd(nodeshot_dir), hide('everything'):
         _set_log_permissions()
         run('workon nodeshot && %s' % sync_command)
+        # only on install
+        if not update:
+            run('workon nodeshot && ./manage.py loaddata initial_data')
 
 
 def create_admin():
