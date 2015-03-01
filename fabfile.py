@@ -280,7 +280,7 @@ def create_project():
     with cd(nodeshot_dir), hide('everything'):
         cmd('chown -R %s:www-data .' % env['user'])
         cmd('adduser www-data %s' % env['user'])
-        cmd('chmod 775 . log %s' % project_name)
+        cmd('chmod 775 . log {name} {name}/media'.format(name=project_name))
         cmd('chmod 750 manage.py ./%s/*.py' % project_name)
 
 
