@@ -265,7 +265,7 @@ def install_python_requirements():
     initialize()
     print(green("Installing requirements. This will take a while, sit back and relax..."))
     with hide('everything'):
-        run('workon nodeshot && pip install -U distribute pip setuptools wheel')
+        run('workon nodeshot && pip install -U pip wheel setuptools')
         run('workon nodeshot && pip install -U https://github.com/ninuxorg/nodeshot/tarball/master')
 
 
