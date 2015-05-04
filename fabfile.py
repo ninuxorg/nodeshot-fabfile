@@ -3,7 +3,7 @@ import string
 import random
 from time import sleep
 
-from fabric.api import *
+from fabric.api import *  # noqa
 from fabric.contrib.files import append, exists
 from fabric.colors import green, magenta, red
 
@@ -133,7 +133,7 @@ def initialize_server(use_defaults=False):
 
 
 def initialize_db(use_defaults=False):
-    db_params = ('db_user','db_pass')
+    db_params = ('db_user', 'db_pass')
     for db_param in db_params:
         if db_param not in globals():
             global db_user
