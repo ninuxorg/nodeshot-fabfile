@@ -14,8 +14,13 @@ Nodeshot fabfile deploy script.
 Documentation here: http://nodeshot.rtfd.org/en/latest/topics/automated_install.html
 
 
-Quick commands
---------------
+Quick reference
+---------------
 
-- fab install -H <remote_host> -u <user> -p <password>
-- fab update:use_defaults=True,project_name=<project_name> -H <remote_host> -u <user> -p <password>
+install::
+
+    fab install -H <remote_host> -u <user> -p <password>
+
+update::
+
+    fab update:use_defaults=True,project_name=<project_name> -H <remote_host> -u <user> -p <password>
