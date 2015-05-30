@@ -18,6 +18,7 @@ libjson0-dev
 nginx-full
 nginx-common
 openssl
+libffi-dev
 zlib-bin
 libjpeg-dev
 supervisor
