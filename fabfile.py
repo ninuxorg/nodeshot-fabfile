@@ -299,6 +299,16 @@ def edit_settings():
 def install_redis():
     initialize()
     print(green("Installing redis..."))
+    if version == 'debian7':
+        with hide('everything'):
+            print(green("Adding dotdeb packages in order to get a "
+                        "more recent redis-server version on debian 7"))
+            cmd('echo "deb http://packages.dotdeb.org wheezy all" > /etc/apt/sources.list.d/dotdeb.list')
+            cmd('echo "deb-src http://packages.dotdeb.org wheezy all" >> /etc/apt/sources.list.d/dotdeb.list')
+            with cd('/tmp'):
+                cmd('wget http://www.dotdeb.org/dotdeb.gpg')
+                cmd('apt-key add dotdeb.gpg')
+            cmd('apt-get update')
     with hide('everything'):
         cmd('apt-get -y --force-yes install redis-server')
         run('workon nodeshot && pip install -U celery[redis]')
