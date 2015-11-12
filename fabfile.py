@@ -321,7 +321,7 @@ def install_redis():
 def sync_data(update=None):
     initialize()
     print(green("Running migrate and collectstatic..."))
-    sync_command = './manage.py migrate --no-initial-data --noinput && ./manage.py collectstatic --noinput'
+    sync_command = './manage.py migrate --fake-initial --no-initial-data --noinput && ./manage.py collectstatic --noinput'
     with cd(nodeshot_dir), hide('everything'):
         _set_log_permissions()
         run('workon nodeshot && %s' % sync_command)
