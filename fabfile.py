@@ -192,6 +192,8 @@ def get_os_version():
 
     if 'Debian' in version_file and '7' in version_file:
         version = 'debian7'
+    elif 'Debian' in version_file and '8' in version_file:
+        version = 'debian8'
     elif 'Ubuntu' in version_file and '13' in version_file:
         version = 'ubuntu13'
     elif 'Ubuntu' in version_file and '14' in version_file:
@@ -213,6 +215,11 @@ def install_dependencies():
         if version == 'ubuntu14':
             dependencies = dependencies.replace('postgresql-9.1', 'postgresql')
             dependencies = dependencies.replace('postgresql-server-dev-9.1', 'postgresql-server-dev-9.3')
+        elif version == 'debian8':
+            dependencies = dependencies.replace('postgresql-9.1', 'postgresql-9.4')
+            dependencies = dependencies.replace('postgresql-server-dev-9.1', 'postgresql-server-dev-9.4')
+            dependencies = dependencies.replace('zlib-bin', 'minizip')
+            dependencies = '{0} postgresql-9.4-postgis-2.1 python-pip'.format(dependencies)
 
         # install
         cmd('apt-get install -y %s' % dependencies)
